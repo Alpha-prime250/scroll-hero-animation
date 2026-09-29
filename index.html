@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Welcome ItzFizz</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+  html, body { margin: 0; background: #07080c; color: #fff; font-family: system-ui, sans-serif; }
+  .wheel { transform-box: fill-box; transform-origin: 50% 50%; }
+  .road {
+    background-image: repeating-linear-gradient(90deg, #ffffff55 0 60px, transparent 60px 120px);
+    background-size: 120px 3px; background-repeat: repeat-x;
+  }
+  .car, .letter, .stat { will-change: transform; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<section class="h-[150vh] flex items-center justify-center text-zinc-500 text-sm">Keep scrolling ↓ (next content)</section>
+
+<script>
+const { useEffect, useRef } = React;
+const h = React.createElement;
+
+const STATS = [
+  ["200%", "Higher conversions"],
+  ["98%", "Customer satisfaction"],
+  ["350%", "Increase in sales"],
+  ["80%", "Faster page loads"],
+];
+
+function Car() {
+  return h("svg", { viewBox: "0 0 320 120", className: "car absolute bottom-[14%] left-[4vw] w-[38vw] max-w-[420px] min-w-[200px]" },
+    h("path", { d: "M10 85 L20 60 Q30 50 70 46 L110 22 Q125 14 170 14 L215 16 Q240 22 255 46 L295 54 Q312 60 312 85 Z", fill: "#ff3d5a" }),
+    h("path", { d: "M118 30 L172 26 L208 28 L230 46 L100 48 Z", fill: "#0b1220" }),
+    [78, 246].map(cx =>
+      h("g", { key: cx },
+        h("circle", { cx, cy: 90, r: 24, fill: "#111" }),
+        h("g", { className: "wheel" },
+          h("circle", { cx, cy: 90, r: 14, fill: "#cfd3dc" }),
+          [0, 60, 120].map(a => h("rect", { key: a, x: cx - 1.5, y: 76, width: 3, height: 28, fill: "#555", transform: `rotate(${a} ${cx} 90)` }))
+        )
+      )
+    )
+  );
+}
+
+function Hero() {
+  const root = useRef(null);
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+    const ctx = gsap.context(() => {
+      // Intro (time-based, runs once)
+      gsap.timeline({ defaults: { ease: "power3.out" } })
+        .from(".letter", { y: 40, opacity: 0, duration: 0.8, stagger: 0.05 })
+        .from(".stat", { y: 30, opacity: 0, duration: 0.7, stagger: 0.2 }, "-=0.2")
+        .from(".car", { opacity: 0, duration: 1 }, "-=0.9");
+
+      // Scroll-driven (scrub: 1 => 1s of smoothing/interpolation)
+      gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: { trigger: root.current, start: "top top", end: "+=200%", scrub: 1, pin: true, invalidateOnRefresh: true },
+      })
+        .to(".car", { x: () => window.innerWidth * 0.98 - document.querySelector(".car").clientWidth - window.innerWidth * 0.04 }, 0)
+        .to(".wheel", { rotation: 900 }, 0)
+        .to(".road", { backgroundPositionX: "-900px" }, 0)
+        .to(".headline", { scale: 1.12, opacity: 0.25 }, 0)
+        .to(".stat", { y: -20, stagger: 0.1 }, 0);
+    }, root);
+    return () => ctx.revert();
+  }, []);
+
+  const words = ["WELCOME", "ITZ", "FIZZ"];
+  return h("section", { ref: root, className: "relative h-screen overflow-hidden bg-gradient-to-b from-[#0b0e17] to-[#07080c]" },
+    h("div", { className: "headline absolute top-[12%] w-full text-center px-4" },
+      h("h1", { className: "flex flex-wrap justify-center gap-x-[3vw] text-[clamp(1.4rem,5.2vw,4rem)] font-light" },
+        words.map(w => h("span", { key: w, className: "flex" },
+          w.split("").map((c, i) => h("span", { key: i, className: "letter inline-block mx-[0.18em]" }, c))
+        ))
+      )
+    ),
+    h("div", { className: "absolute top-[34%] w-full px-6 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl left-1/2 -translate-x-1/2" },
+      STATS.map(([n, t]) => h("div", { key: n, className: "stat text-center" },
+        h("div", { className: "text-4xl md:text-5xl font-semibold text-rose-400" }, n),
+        h("div", { className: "mt-1 text-xs md:text-sm text-zinc-400" }, t)
+      ))
+    ),
+    h(Car),
+    h("div", { className: "road absolute bottom-[14%] left-0 w-full h-[3px] translate-y-[3px]" })
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(h(Hero));
+</script>
+</body>
+</html>
